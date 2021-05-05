@@ -1,4 +1,13 @@
 function statement(invoice, plays) {
+  
+  let result = `청구내역 (고객명: ${invoice.customer})\n`;
+  for (let perf of invoice.performances) {
+    result += ` - ${playFor(perf).name}: ${usd(amountFor(perf))} (${perf.audience}석)\n`   
+  }
+  result += `총액: ${usd(totalAmount())}\n`;  
+  result += `적립포인트: ${totalVolumeCredits()}점\n`;  
+  return result;
+  
 
   function amountFor(aPerfomance) {
     let result = 0;
@@ -26,7 +35,6 @@ function statement(invoice, plays) {
     return plays[aPerfomance.playID];
   }
   
-
   function volumeCreditsFor(perf) {
     let result = 0;
     result += Math.max(perf.audience - 30, 0);
@@ -36,30 +44,33 @@ function statement(invoice, plays) {
     return result
   }
 
-  
-  
-  let totalAmount = 0;
-  let volumeCredits = 0;
-  let result = `청구내역 (고객명: ${invoice.customer})\n`;
-  const format = new Intl.NumberFormat("en-US", { 
-                                                  style: "currency", 
-                                                  currency: "USD", 
-                                                  minimumFractionDigits: 2 
-                                                }
-                                      ).format;
-  for (let perf of invoice.performances) {
-
-    volumeCredits += volumeCreditsFor(perf);
-
-    // 청구 내역을 출력한다.
-    result += ` - ${playFor(perf).name}: ${format(amountFor(perf)/100)} (${perf.audience}석)\n`
-    totalAmount += amountFor(perf);
-
+  function totalVolumeCredits() {
+    let result = 0;
+    for (let perf of invoice.performances) {
+      result += volumeCreditsFor(perf);
+    }
+    return result;
   }
 
-  result += `총액: ${format(totalAmount/100)}\n`;  
-  result += `적립포인트: ${volumeCredits}점\n`;  
-  return result;
+  function usd(aNumber)   {
+    return new Intl.NumberFormat("en-US", { 
+                                            style: "currency", 
+                                            currency: "USD", 
+                                            minimumFractionDigits: 2 
+                                          }
+                                ).format(aNumber/100);
+  }
+  
+  function totalAmount() {
+    let result = 0;
+    for (let perf of invoice.performances) {
+      result += amountFor(perf);
+    }
+    return result;
+  }
+  
+
+
   
   
 
