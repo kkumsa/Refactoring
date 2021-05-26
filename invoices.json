@@ -1,6 +1,7 @@
-let invoice = `
+let invoices = `{ "list": 
+[
   {
-    "customer": "BigCo", 
+    "customer": "James An College", 
     "performances": [
       {
         "playID": "hamlet", 
@@ -15,5 +16,24 @@ let invoice = `
         "audience": 40
       }
     ]
+  },
+
+  {
+    "customer": "주식회사 UNS", 
+    "performances": [
+      {
+        "playID": "hamlet", 
+        "audience": 800
+      }, 
+      {
+        "playID": "as-like", 
+        "audience": 200
+      },
+      {
+        "playID": "othello", 
+        "audience": 900
+      }
+    ]
   }
+]}
 `;

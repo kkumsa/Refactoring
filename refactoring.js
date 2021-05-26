@@ -1,58 +1,91 @@
-function statement(invoice, plays) {
-  
-  let result = `청구내역 (고객명: ${invoice.customer})\n`;
-  for (let perf of invoice.performances) {
-    result += ` - ${playFor(perf).name}: ${usd(amountFor(perf))} (${perf.audience}석)\n`   
-  }
-  result += `총액: ${usd(totalAmount())}\n`;  
-  result += `적립포인트: ${totalVolumeCredits()}점\n`;  
-  return result;
-  
 
-  function amountFor(aPerfomance) {
+
+
+function statement(invoice, plays) {
+  return createStatementData(invoice, plays)
+}
+
+function createStatementData(invoice, plays) {
+  const statementData = {};
+  statementData.customer = invoice.customer;
+  statementData.performances = invoice.performances.map(enrichPerformance);
+  statementData.totalAmount = totalAmount(statementData);
+  statementData.totalVolumeCredits = totalVolumeCredits(statementData);
+  return renderPlainText(statementData, plays);
+
+  function enrichPerformance(aPerformance){
+    const result = Object.assign({}, aPerformance);
+    result.play = playFor(result);
+    result.amount = amountFor(result);
+    result.volumeCredits = volumeCreditsFor(result);    
+    return result;
+  }
+
+  function playFor(aPerformance) {
+    return plays[aPerformance.playID];
+  }
+
+  function amountFor(aPerformance) {
     let result = 0;
-    switch (playFor(aPerfomance).type) {
+    switch (aPerformance.play.type) {
       case "tragedy":
         result = 80000;
-        if (aPerfomance.audience > 30) {
-          result += 1000 * (aPerfomance.audience - 30);
+        if (aPerformance.audience > 30) {
+          result += 1000 * (aPerformance.audience - 30);
         }
         break;
       case "comedy":
         result = 60000;
-        if (aPerfomance.audience > 20) {
-          result += 10000 + 500 * (aPerfomance.audience - 20);
+        if (aPerformance.audience > 20) {
+          result += 10000 + 500 * (aPerformance.audience - 20);
         }
-        result += 300 * aPerfomance.audience;
+        result += 300 * aPerformance.audience;
         break;
       default:
-        throw new Error('알 수 없는 장르: ${playFor(perf).type}');
+        throw new Error(`알 수 없는 장르: ${aPerformance.play.type}`);
       }
       return result;
-  }
-
-  function playFor(aPerfomance) {
-    return plays[aPerfomance.playID];
   }
   
   function volumeCreditsFor(perf) {
     let result = 0;
     result += Math.max(perf.audience - 30, 0);
     // 희극 관객 5명마다 추가 포인트를 제공한다.
-    if ("comedy" === playFor(perf).type) 
+    if ("comedy" === perf.type) 
     result += Math.floor(perf.audience / 5);
     return result
   }
-
-  function totalVolumeCredits() {
+  
+  function totalAmount(data) {
     let result = 0;
-    for (let perf of invoice.performances) {
-      result += volumeCreditsFor(perf);
+    for (let perf of data.performances) {
+      result += perf.amount;
+    }
+    return result;
+  }
+  
+  function totalVolumeCredits(data) {
+    let result = 0;
+    for (let perf of data.performances) {
+      result += perf.volumeCredits;
     }
     return result;
   }
 
-  function usd(aNumber)   {
+}
+
+
+function renderPlainText(data, plays) {
+  
+  let result = `Invoice Detail (Cusomer: ${data.customer})\n`;
+  for (let perf of data.performances) {
+    result += ` - ${perf.play.name}: ${usd(perf.amount)} (${perf.audience} seats)\n`   
+  }
+  result += `Total Amount: ${usd(data.totalAmount)}\n`;  
+  result += `Accumulated Points: ${data.totalVolumeCredits} points\n`;  
+  return result;
+
+  function usd(aNumber) {
     return new Intl.NumberFormat("en-US", { 
                                             style: "currency", 
                                             currency: "USD", 
@@ -60,20 +93,17 @@ function statement(invoice, plays) {
                                           }
                                 ).format(aNumber/100);
   }
-  
-  function totalAmount() {
-    let result = 0;
-    for (let perf of invoice.performances) {
-      result += amountFor(perf);
-    }
-    return result;
+
+  function totalAmount(data) {
+    return data.performances
+      .reduce((total, p) => total + p.amount, 0);
+  }
+
+  function totalVolumeCredits(data) {
+    return data.performances
+      .reduce((total, p) => total + p.volumeCredits, 0);
   }
   
-
-
-  
-  
-
 }
 
 // console.log(plays);
